@@ -9,8 +9,6 @@ date +"%Y-%m-%d %H:%M:%S" > $TIMESTAMP_FILE
 echo "Сохранение текущих настроек..."
 {
   echo "logging_collector=$(PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -t -c "SHOW logging_collector;" | xargs)"
-  echo "log_directory=$(PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -t -c "SHOW log_directory;" | xargs)"
-  echo "log_filename=$(PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -t -c "SHOW log_filename;" | xargs)"
   echo "log_statement=$(PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -t -c "SHOW log_statement;" | xargs)"
   echo "log_min_duration_statement=$(PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -t -c "SHOW log_min_duration_statement;" | xargs)"
 } > /tmp/logging_params_backup.txt
