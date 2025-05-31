@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+import html  # Импортируем модуль для экранирования HTML
 
 def parse_log_line(line):
     date_pattern = r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} MSK)'
@@ -99,26 +100,60 @@ def main(input_file, output_file):
                         tx_key = current_operation['vxid'] if current_operation['vxid'] else 'no_transaction'
                         transactions[tx_key]['total_duration'] += additional_duration
 
-    html = '''
+    # Множество для сбора уникальных пользователей
+    users_set = set()
+
+    # ... (парсинг файла остаётся без изменений)
+
+    # Собираем пользователей из всех транзакций
+    for tx in transactions.values():
+        if tx['user']:
+            users_set.add(tx['user'])
+
+    # Сортируем пользователей для удобства
+    sorted_users = sorted(users_set)
+
+    # Генерируем HTML с фильтром
+    html_content = '''
     <!DOCTYPE html>
     <html>
     <head>
         <title>Transaction Log Analysis</title>
         <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
+            .filter-section { margin-bottom: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px; }
             .transaction { border: 1px solid #e0e0e0; padding: 15px; margin: 10px 0; border-radius: 8px; background: #f9f9f9; }
             .transaction h3 { margin-top: 0; color: #2c3e50; }
             .no-transaction { border-color: #e74c3c; background: #ffe6e6; }
             .operation { margin: 10px 0; padding-left: 20px; }
             .operation-type { color: #3498db; font-weight: bold; }
+            .hidden { display: none; }
         </style>
     </head>
     <body>
     <h1>Transaction Log Analysis</h1>
+    
+    <div class="filter-section">
+        <form id="userFilterForm">
+            <label for="userSelect">Filter by user:</label>
+            <select id="userSelect" multiple size="5">
+                <!-- Опции будут добавлены динамически -->
     '''
 
-    for tx_key in transactions:
-        tx = transactions[tx_key]
+    # Добавляем опции для всех пользователей
+    for user in sorted_users:
+        escaped_user = html.escape(user)
+        html_content += f'<option value="{escaped_user}">{escaped_user}</option>\n'
+
+    html_content += '''
+            </select>
+            <button type="button" onclick="applyUserFilter()">Apply</button>
+        </form>
+    </div>
+    '''
+
+    # Генерируем транзакции с data-атрибутами
+    for tx_key, tx in transactions.items():
         if not tx['operations']:
             continue
 
@@ -126,24 +161,47 @@ def main(input_file, output_file):
         if tx_key == 'no_transaction':
             css_class += ' no-transaction'
 
-        header = f"Transaction ID: {tx_key}" if tx_key != 'no_transaction' else "No Transaction"
-        header += f"<br>Start Time: {tx['start_time']} | Total Duration: {tx['total_duration']:.3f} ms | User: {tx['user']} | Pid: {tx['pid']}"
+        # Экранируем данные для безопасной вставки в HTML
+        header = f"Transaction ID: {html.escape(tx_key)}" if tx_key != 'no_transaction' else "No Transaction"
+        header += f"<br>Start Time: {html.escape(tx['start_time'])} | Total Duration: {tx['total_duration']:.3f} ms"
+        header += f" | User: {html.escape(tx['user'])} | Pid: {html.escape(tx['pid'])}"
 
-        html += f'<div class="{css_class}">\n'
-        html += f'    <h3>{header}</h3>\n'
+        html_content += f'<div class="{css_class}" data-user="{html.escape(tx["user"])}">\n'
+        html_content += f'    <h3>{header}</h3>\n'
+
         for op in tx['operations']:
-            html += f'    <div class="operation">\n'
-            html += f'        <span class="operation-type">[{op["type"]}]</span> {op["message"]}\n'
-            html += '    </div>\n'
-        html += '</div>\n'
+            escaped_type = html.escape(op["type"])
+            escaped_message = html.escape(op["message"])
+            html_content += f'    <div class="operation">\n'
+            html_content += f'        <span class="operation-type">[{escaped_type}]</span> {escaped_message}\n'
+            html_content += '    </div>\n'
 
-    html += '''
+        html_content += '</div>\n'
+
+    # Добавляем JavaScript для фильтрации
+    html_content += '''
+    <script>
+        function applyUserFilter() {
+            const select = document.getElementById('userSelect');
+            const selectedUsers = Array.from(select.selectedOptions).map(opt => opt.value);
+            const transactions = document.querySelectorAll('.transaction');
+            
+            // Если не выбрано ни одного пользователя - показываем все
+            const showAll = selectedUsers.length === 0;
+            
+            transactions.forEach(transaction => {
+                const user = transaction.dataset.user;
+                const shouldShow = showAll || selectedUsers.includes(user);
+                transaction.classList.toggle('hidden', !shouldShow);
+            });
+        }
+    </script>
     </body>
     </html>
     '''
 
     with open(output_file, 'w') as f:
-        f.write(html)
+        f.write(html_content)
 
 if __name__ == '__main__':
     main('postgresql.log', 'transactions.html')
