@@ -2,6 +2,9 @@
 
 source ./pg_log_settings.sh
 
+# Создаем локальную директорию
+mkdir -p $LOCAL_TMP_LOG_DIR
+
 # Сохраняем время запуска
 date +"%Y-%m-%d %H:%M:%S" > $TIMESTAMP_FILE
 
