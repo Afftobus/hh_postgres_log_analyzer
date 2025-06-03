@@ -20,3 +20,4 @@ PATH_TO_ANALYZER='/home/user/log_analyzer.py'
 
 # не думаю, что это стоит менять. Вынес сюда, чтобы не дублировать
 TIMESTAMP_FILE="$LOCAL_TMP_LOG_DIR/start_time"
+LOGGING_PARAMS_BACKUP_FILE="$LOCAL_TMP_LOG_DIR/logging_params_backup.txt"

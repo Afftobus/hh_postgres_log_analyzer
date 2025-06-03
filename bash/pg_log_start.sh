@@ -11,7 +11,7 @@ echo "Сохранение текущих настроек..."
   echo "logging_collector=$(PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -t -c "SHOW logging_collector;" | xargs)"
   echo "log_statement=$(PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -t -c "SHOW log_statement;" | xargs)"
   echo "log_min_duration_statement=$(PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -t -c "SHOW log_min_duration_statement;" | xargs)"
-} > /tmp/logging_params_backup.txt
+} > "$LOGGING_PARAMS_BACKUP_FILE"
 
 # Включаем расширенное логирование
 echo "Включение расширенного логирования..."

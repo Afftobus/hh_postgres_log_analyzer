@@ -8,7 +8,7 @@ BACKUP_DIR="$LOCAL_TMP_LOG_DIR/$(date +"%Y-%m-%d-%H-%M-%S")"
 echo "Восстановление настроек..."
 while IFS='=' read -r param value; do
   PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "ALTER SYSTEM SET $param = '$value';"
-done < /tmp/logging_params_backup.txt
+done < "$LOGGING_PARAMS_BACKUP_FILE"
 
 # Перезагружаем конфигурацию PostgreSQL
 echo "Перезагрузка конфигурации..."
